@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label ''  // Or use 'agent any' if you do not need to target a specific node
+            label 'any'  // Or use 'agent any' if you do not need to target a specific node
         }
     }
 
@@ -9,7 +9,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    git branch: 'main', url: 'https://github.com/ganeshkumar14/spring-petclinic-microservices.git'
+                    git branch: 'main', credentialsId: 'github-token', url: 'https://github.com/ganeshkumar14/spring-petclinic-microservices.git'
                 }
             }
         }
