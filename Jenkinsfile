@@ -1,7 +1,7 @@
 pipeline {
     agent {
         node {
-            label 'any'  // Or use 'agent any' if you do not need to target a specific node
+            label ''  // Or use 'agent any' if you do not need to target a specific node
         }
     }
 
