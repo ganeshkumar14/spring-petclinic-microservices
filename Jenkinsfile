@@ -3,7 +3,7 @@ pipeline {
         docker {
             image 'maven:3.9-eclipse-temurin-17'
             // Mounts the socket AND disables the forced TLS environment variables
-            args '-v /var/run/docker.sock:/var/run/docker.sock -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
+            args '-v /var/run/docker.sock:/var/run/docker.sock --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
         }
     }
 
