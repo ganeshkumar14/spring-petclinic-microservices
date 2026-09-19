@@ -1,22 +1,19 @@
 pipeline {
     agent {
-        // This spins up a temporary sibling container on your GCP host to run the build commands
         docker {
             image 'maven:3.9-eclipse-temurin-17'
-            // Mounts the host's Docker socket so the container can build new Docker images
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            // Mounts the socket AND disables the forced TLS environment variables
+            args '-v /var/run/docker.sock:/var/run/docker.sock -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
         }
     }
 
     environment {
-        // Using the GitHub credential ID we discussed earlier to securely authenticate
         GITHUB_CREDENTIALS_ID = 'github-token' 
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Securely checks out the repository using your authenticated GitHub token
                 git branch: 'main', 
                     credentialsId: "${env.GITHUB_CREDENTIALS_ID}", 
                     url: 'https://github.com/ganeshkumar14/spring-petclinic-microservices.git'
@@ -26,7 +23,6 @@ pipeline {
         stage('Build & Package Images') {
             steps {
                 echo 'Compiling Spring Boot apps and packaging them into local Docker images...'
-                // Automatically uses the project's buildDocker profile
                 sh './mvnw clean install -P buildDocker'
             }
         }
@@ -41,7 +37,6 @@ pipeline {
         stage('Verify Local Images') {
             steps {
                 echo 'Listing the newly created microservice images on the GCP VM host:'
-                // This talks directly to the host's Docker daemon
                 sh 'docker images | grep spring-petclinic'
             }
         }
