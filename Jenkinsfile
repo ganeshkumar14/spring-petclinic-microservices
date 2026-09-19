@@ -1,10 +1,9 @@
 pipeline {
     agent {
         docker {
-            // Using a standard Ubuntu image bypasses the Jenkins Maven plugin's forced argument injection
             image 'eclipse-temurin:17-jdk-jammy'
-            // Mount the host's Docker socket and binary to let the container build the microservice images
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
+            // Mounts host socket/binary AND enforces Docker BuildKit engine compilation mode
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH="" -e DOCKER_BUILDKIT=1 -e COMPOSE_BUILDKIT=1'
         }
     }
 
@@ -23,9 +22,8 @@ pipeline {
 
         stage('Build & Package Images') {
             steps {
-                echo 'Compiling Spring Boot apps and packaging them into local Docker images...'
+                echo 'Compiling Spring Boot apps and packaging them into local Docker images via BuildKit...'
                 sh 'chmod +x mvnw'
-                // Safely runs the Maven wrapper without the Jenkins plugin corrupting the command line strings
                 sh './mvnw clean install -P buildDocker'
             }
         }
