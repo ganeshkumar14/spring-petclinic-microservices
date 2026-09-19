@@ -2,8 +2,8 @@ pipeline {
     agent {
         docker {
             image 'maven:3.9-eclipse-temurin-17'
-            // Mounts the socket AND disables the forced TLS environment variables
-            args '-v /var/run/docker.sock:/var/run/docker.sock --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
+            // We pass a custom local repository directory inside the workspace to prevent the plugin from auto-generating broken paths
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
         }
     }
 
@@ -16,21 +16,23 @@ pipeline {
             steps {
                 git branch: 'main', 
                     credentialsId: "${env.GITHUB_CREDENTIALS_ID}", 
-                    url: 'https://github.com/ganeshkumar14/spring-petclinic-microservices.git'
+                    url: 'https://github.com'
             }
         }
 
         stage('Build & Package Images') {
             steps {
                 echo 'Compiling Spring Boot apps and packaging them into local Docker images...'
-                sh './mvnw clean install -P buildDocker'
+                sh 'chmod +x mvnw'
+                // Added '-Dmaven.repo.local=.m2/repository' to isolate the repository cleanly inside the workspace
+                sh './mvnw clean install -P buildDocker -Dmaven.repo.local=.m2/repository'
             }
         }
 
         stage('Test Verification') {
             steps {
                 echo 'Running unit and integration tests...'
-                sh './mvnw test'
+                sh './mvnw test -Dmaven.repo.local=.m2/repository'
             }
         }
 
