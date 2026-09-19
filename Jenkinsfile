@@ -16,7 +16,7 @@ pipeline {
             steps {
                 git branch: 'main', 
                     credentialsId: "${env.GITHUB_CREDENTIALS_ID}", 
-                    url: 'https://github.com'
+                    url: 'https://github.com/ganeshkumar14/spring-petclinic-microservices.git'
             }
         }
 
