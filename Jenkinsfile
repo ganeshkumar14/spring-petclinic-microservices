@@ -2,13 +2,15 @@ pipeline {
     agent {
         docker {
             image 'eclipse-temurin:17-jdk-jammy'
-            // Mounts the Docker socket, main binary, AND the host CLI plugins folder where buildx lives
+            // Mounts all required host endpoints and maps them to the socket framework
             args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v /usr/libexec/docker/cli-plugins:/usr/libexec/docker/cli-plugins --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH="" -e DOCKER_BUILDKIT=1'
         }
     }
 
     environment {
         GITHUB_CREDENTIALS_ID = 'github-token' 
+        // Redirects Docker config out of the restricted root directory and into your local project workspace
+        DOCKER_CONFIG = "${WORKSPACE}/.docker"
     }
 
     stages {
@@ -24,14 +26,15 @@ pipeline {
             steps {
                 echo 'Compiling Spring Boot apps and packaging them into local Docker images via BuildKit...'
                 sh 'chmod +x mvnw'
-                sh './mvnw clean install -P buildDocker'
+                // Re-added the local repository target folder constraint to ensure parallel safety 
+                sh './mvnw clean install -P buildDocker -Dmaven.repo.local=.m2/repository'
             }
         }
 
         stage('Test Verification') {
             steps {
                 echo 'Running unit and integration tests...'
-                sh './mvnw test'
+                sh './mvnw test -Dmaven.repo.local=.m2/repository'
             }
         }
 
