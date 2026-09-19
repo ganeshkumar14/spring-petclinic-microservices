@@ -2,8 +2,8 @@ pipeline {
     agent {
         docker {
             image 'eclipse-temurin:17-jdk-jammy'
-            // Mounts host socket/binary AND enforces Docker BuildKit engine compilation mode
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH="" -e DOCKER_BUILDKIT=1 -e COMPOSE_BUILDKIT=1'
+            // Mounts the Docker socket, main binary, AND the host CLI plugins folder where buildx lives
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -v /usr/libexec/docker/cli-plugins:/usr/libexec/docker/cli-plugins --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH="" -e DOCKER_BUILDKIT=1'
         }
     }
 
