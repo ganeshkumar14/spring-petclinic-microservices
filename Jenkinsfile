@@ -1,9 +1,10 @@
 pipeline {
     agent {
         docker {
-            image 'maven:3.9-eclipse-temurin-17'
-            // We pass a custom local repository directory inside the workspace to prevent the plugin from auto-generating broken paths
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
+            // Using a standard Ubuntu image bypasses the Jenkins Maven plugin's forced argument injection
+            image 'eclipse-temurin:17-jdk-jammy'
+            // Mount the host's Docker socket and binary to let the container build the microservice images
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --group-add 1001 -e DOCKER_TLS_VERIFY="" -e DOCKER_CERT_PATH=""'
         }
     }
 
@@ -24,15 +25,15 @@ pipeline {
             steps {
                 echo 'Compiling Spring Boot apps and packaging them into local Docker images...'
                 sh 'chmod +x mvnw'
-                // Added '-Dmaven.repo.local=.m2/repository' to isolate the repository cleanly inside the workspace
-                sh './mvnw clean install -P buildDocker -Dmaven.repo.local=.m2/repository'
+                // Safely runs the Maven wrapper without the Jenkins plugin corrupting the command line strings
+                sh './mvnw clean install -P buildDocker'
             }
         }
 
         stage('Test Verification') {
             steps {
                 echo 'Running unit and integration tests...'
-                sh './mvnw test -Dmaven.repo.local=.m2/repository'
+                sh './mvnw test'
             }
         }
 
